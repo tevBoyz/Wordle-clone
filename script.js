@@ -54,7 +54,7 @@ keyboard.appendChild(restartRow);
 const layout = [
   ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
   ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-  ["Back", "Z", "X", "C", "V", "B", "N", "M", "Enter"]
+  [ "⌫","Z", "X", "C", "V", "B", "N", "M", "↵"]
 ];
 
 const keyStates = {}; // Track keyboard color states
@@ -81,14 +81,14 @@ layout.forEach(row => {
 function handleKey(key) {
   if (currentRow >= MAX_ATTEMPTS) return;
 
-  if (key === "Enter") {
+  if (key === "↵" || key === "Enter") {
     if (currentGuess.length === 5) {
       submitGuess();
     }
     return;
   }
 
-  if (key === "Back") {
+  if (key === "Back" || key === "⌫") {
     if (currentGuess.length > 0) {
       currentGuess = currentGuess.slice(0, -1);
       updateRow();
