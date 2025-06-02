@@ -5,6 +5,8 @@ var MEANING = "";
 const MAX_ATTEMPTS = 6;
 let currentGuess = "";
 let currentRow = 0;
+const keyStates = {}; // Track keyboard color states
+
 
 const grid = document.getElementById("grid");
 const keyboard = document.getElementById("keyboard");
@@ -12,7 +14,8 @@ const rows = [];
 
 fetchWord();
 
-// 1️⃣ Pre-build grid
+function init() {
+  // 1️⃣ Pre-build grid
 for (let r = 0; r < MAX_ATTEMPTS; r++) {
   const row = document.createElement("div");
   row.className = "d-flex";
@@ -61,7 +64,6 @@ const layout = [
   [ "⌫","Z", "X", "C", "V", "B", "N", "M", "↵"]
 ];
 
-const keyStates = {}; // Track keyboard color states
 
 // 4️⃣ Render virtual keyboard
 layout.forEach(row => {
@@ -80,17 +82,21 @@ layout.forEach(row => {
 
   keyboard.appendChild(rowDiv);
 });
+}
 
 async function isRealWord(word) {
-  const res = await fetch(`https://api.wordnik.com/v4/word.json/${word}/definitions?api_key=${API_KEY}`);
+  const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
   const data = await res.json();
-  return data.length > 0;
+  return data.title === "No Definitions Found" ? false : true;
 }
 
 async function getMeaning(word) {
-  const res = await fetch(`https://api.wordnik.com/v4/word.json/${word}/definitions?api_key=${API_KEY}`);
-  const data = await res.json();
-  return data;
+  // const res = await fetch(`https://api.wordnik.com/v4/word.json/${word}/definitions?api_key=${API_KEY}`);
+  fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+word)
+  .then(response => response.json())
+  .then(data => {
+    MEANING = data[0].meanings[0].definitions[0].definition;
+})
 }
 
 // 5️⃣ Handle keyboard input
@@ -99,12 +105,6 @@ function handleKey(key) {
 
   if (key === "↵" || key === "Enter") {
     if (currentGuess.length === 5) {
-      //todo: enable this if you want to check if the word is real when you get api key
-      // if (isRealWord(currentGuess.toLowerCase())) {
-      //   submitGuess();
-      // } else {
-      //   alert("Not a valid word. Try again.");
-      // }
       submitGuess();
     }
     return;
@@ -181,10 +181,10 @@ function submitGuess() {
   // Win/Loss check
   let confirmed = false;
   if (guess === WORD) {
-    confirmed = confirm(`🎉 Congrats! The word was: ${WORD}. \n meaning: ${getMeaning(WORD)}\n\n\nPlay again?`);
+    confirmed = confirm(`🎉 Congrats! \nThe word was ${WORD}. \n\nMeaning: ${MEANING}\n\n\nPlay again?`);
     if (confirmed) window.location.reload();
   } else if (currentRow === MAX_ATTEMPTS - 1) {
-    confirmed = confirm(`😢 Out of tries. Word was: ${MEANING}.\n\n\nPlay again?`);
+    confirmed = confirm(`😢 Out of tries! \nThe Word was ${WORD}. \n\nMeaning ${MEANING}.\n\n\nPlay again?`);
     if (confirmed) window.location.reload();
   }
 
@@ -226,8 +226,13 @@ function fetchWord() {
 
 function takeWord(data) {
   WORD = data[0].toUpperCase();
-  //MEANING = getMeaning(WORD);
-  // enable this when the meaning api key is available
+  if(isRealWord(WORD)){
+    getMeaning(WORD);
+    init();
+  }
+  else{
+    fetchWord(); // Retry if not a real word
+  }
 }
 
 // 🌙 Theme Handling
