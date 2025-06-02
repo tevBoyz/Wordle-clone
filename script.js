@@ -1,4 +1,7 @@
+const API_KEY = "";
+
 var WORD = "";
+var MEANING = "";
 const MAX_ATTEMPTS = 6;
 let currentGuess = "";
 let currentRow = 0;
@@ -8,7 +11,6 @@ const keyboard = document.getElementById("keyboard");
 const rows = [];
 
 fetchWord();
-setupTheme(); // Init theme toggle
 
 // 1️⃣ Pre-build grid
 for (let r = 0; r < MAX_ATTEMPTS; r++) {
@@ -50,6 +52,8 @@ restartRow.appendChild(restartBtn);
 restartRow.appendChild(themeToggle);
 keyboard.appendChild(restartRow);
 
+setupTheme(); // Init theme toggle
+
 // 3️⃣ Keyboard layout
 const layout = [
   ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
@@ -77,12 +81,30 @@ layout.forEach(row => {
   keyboard.appendChild(rowDiv);
 });
 
+async function isRealWord(word) {
+  const res = await fetch(`https://api.wordnik.com/v4/word.json/${word}/definitions?api_key=${API_KEY}`);
+  const data = await res.json();
+  return data.length > 0;
+}
+
+async function getMeaning(word) {
+  const res = await fetch(`https://api.wordnik.com/v4/word.json/${word}/definitions?api_key=${API_KEY}`);
+  const data = await res.json();
+  return data;
+}
+
 // 5️⃣ Handle keyboard input
 function handleKey(key) {
   if (currentRow >= MAX_ATTEMPTS) return;
 
   if (key === "↵" || key === "Enter") {
     if (currentGuess.length === 5) {
+      //todo: enable this if you want to check if the word is real when you get api key
+      // if (isRealWord(currentGuess.toLowerCase())) {
+      //   submitGuess();
+      // } else {
+      //   alert("Not a valid word. Try again.");
+      // }
       submitGuess();
     }
     return;
@@ -115,9 +137,10 @@ function submitGuess() {
   const guess = currentGuess.toUpperCase();
   const target = WORD.split("");
   const guessLetters = guess.split("");
-  const colors = Array(5).fill("grey");
+  const colors = Array(5).fill("red");
+  const usedLetters = new Set(); // Track guessed letters
 
-  // First pass: Green
+  // First pass: Green (correct position)
   for (let i = 0; i < 5; i++) {
     if (guess[i] === WORD[i]) {
       colors[i] = "green";
@@ -126,29 +149,43 @@ function submitGuess() {
     }
   }
 
-  // Second pass: Yellow
+  // Second pass: Yellow (wrong position)
   for (let i = 0; i < 5; i++) {
     if (guessLetters[i] && target.includes(guessLetters[i])) {
       colors[i] = "yellow";
       target[target.indexOf(guessLetters[i])] = null;
+      guessLetters[i] = null;
     }
   }
 
-  // Apply color classes
+  // Update matrix colors
   for (let i = 0; i < 5; i++) {
     const box = rows[currentRow][i];
     box.classList.add(colors[i]);
-    updateKeyColor(guess[i], colors[i]);
   }
 
-  let confirmed = false;
+  // ✅ Update all guessed letters on the keyboard
+  for (let i = 0; i < 5; i++) {
+    const letter = guess[i];
+    usedLetters.add(letter);
+    updateKeyColor(letter, colors[i]);
+  }
 
+  // ✅ Also ensure red keys for letters guessed but not in the word at all
+  usedLetters.forEach(letter => {
+    if (!WORD.includes(letter)) {
+      updateKeyColor(letter, "red");
+    }
+  });
+
+  // Win/Loss check
+  let confirmed = false;
   if (guess === WORD) {
-    confirmed = confirm(`🎉 Congrats! The word was: ${WORD}.\n\nPlay again?`);
-    if (confirmed) location.reload();
+    confirmed = confirm(`🎉 Congrats! The word was: ${WORD}. \n meaning: ${getMeaning(WORD)}\n\n\nPlay again?`);
+    if (confirmed) window.location.reload();
   } else if (currentRow === MAX_ATTEMPTS - 1) {
-    confirmed = confirm(`😢 Out of tries. Word was: ${WORD}.\n\nPlay again?`);
-    if (confirmed) location.reload();
+    confirmed = confirm(`😢 Out of tries. Word was: ${MEANING}.\n\n\nPlay again?`);
+    if (confirmed) window.location.reload();
   }
 
   currentRow++;
@@ -162,10 +199,10 @@ function updateKeyColor(letter, color) {
 
   const current = keyStates[letter];
   if (current === "green") return;
-  if (current === "yellow" && color === "grey") return;
+  if (current === "yellow" && color === "red") return;
 
   keyStates[letter] = color;
-  btn.classList.remove("btn-secondary", "green", "yellow", "grey");
+  btn.classList.remove("btn-secondary", "green", "yellow", "red");
   btn.classList.add(color);
 }
 
@@ -189,7 +226,8 @@ function fetchWord() {
 
 function takeWord(data) {
   WORD = data[0].toUpperCase();
-  // console.log("Word to guess:", WORD);
+  //MEANING = getMeaning(WORD);
+  // enable this when the meaning api key is available
 }
 
 // 🌙 Theme Handling
