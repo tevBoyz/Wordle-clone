@@ -54,7 +54,7 @@ keyboard.appendChild(restartRow);
 const layout = [
   ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
   ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-  ["Enter", "Z", "X", "C", "V", "B", "N", "M", "Back"]
+  ["Back", "Z", "X", "C", "V", "B", "N", "M", "Enter"]
 ];
 
 const keyStates = {}; // Track keyboard color states
@@ -67,8 +67,8 @@ layout.forEach(row => {
   row.forEach(key => {
     const button = document.createElement("button");
     button.textContent = key;
-    button.className = "btn btn-secondary m-1";
-    button.style.minWidth = key.length > 1 ? "60px" : "40px";
+    button.className = "btn-rounded btn-secondary m-1";
+    button.style.minWidth = key.length > 1 ? "50px" : "30px";
     button.onclick = () => handleKey(key);
     button.id = `key-${key}`;
     rowDiv.appendChild(button);
@@ -189,7 +189,7 @@ function fetchWord() {
 
 function takeWord(data) {
   WORD = data[0].toUpperCase();
-  console.log("Word to guess:", WORD);
+  // console.log("Word to guess:", WORD);
 }
 
 // 🌙 Theme Handling
