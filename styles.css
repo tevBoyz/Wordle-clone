@@ -90,3 +90,7 @@ body.dark #theme-toggle {
 .btn-rounded {
   border-radius: 10px;
 }
+
+.btn {
+  transition: 2s ease-in-out border-color color;
+}

@@ -11,6 +11,7 @@ const keyStates = {}; // Track keyboard color states
 const grid = document.getElementById("grid");
 const keyboard = document.getElementById("keyboard");
 const rows = [];
+let hintButton = null;
 
 fetchWord();
 
@@ -32,7 +33,7 @@ for (let r = 0; r < MAX_ATTEMPTS; r++) {
 
 // 2️⃣ Add Restart + Theme Toggle
 const restartRow = document.createElement("div");
-restartRow.className = "w-100 d-flex justify-content-between mb-2";
+restartRow.className = "w-50 d-flex justify-content-around mb-2";
 
 const restartBtn = document.createElement("button");
 restartBtn.className = "btn btn-outline-danger";
@@ -51,7 +52,24 @@ themeToggle.onclick = () => {
   setTheme(newTheme);
 };
 
+hintButton = document.createElement("button");
+hintButton.className = "btn";
+hintButton.innerHTML = '<i class="fas fa-question"></i>';
+hintButton.onclick = () => {
+  if(currentRow == 5){
+    if (MEANING) {
+    alert(`Definition of word is: ${MEANING}`);
+  } else {
+    alert("Hint not available.");
+  }
+  }
+  else{
+    alert("You can only get a hint on your last attempt.");
+  }
+};
+
 restartRow.appendChild(restartBtn);
+restartRow.appendChild(hintButton);
 restartRow.appendChild(themeToggle);
 keyboard.appendChild(restartRow);
 
@@ -74,7 +92,8 @@ layout.forEach(row => {
     const button = document.createElement("button");
     button.textContent = key;
     button.className = "btn-rounded btn-secondary m-1";
-    button.style.minWidth = key.length > 1 ? "30px" : "20px";
+    button.style.width = "30px";
+    button.style.height = "40px";
     button.onclick = () => handleKey(key);
     button.id = `key-${key}`;
     rowDiv.appendChild(button);
@@ -82,6 +101,12 @@ layout.forEach(row => {
 
   keyboard.appendChild(rowDiv);
 });
+}
+
+function checkAttemptsForInfo(){
+ if(currentRow == 5){
+  hintButton.classList.add("btn-outline-info");
+ }
 }
 
 async function isRealWord(word) {
@@ -100,12 +125,17 @@ async function getMeaning(word) {
 }
 
 // 5️⃣ Handle keyboard input
-function handleKey(key) {
+async function handleKey(key) {
   if (currentRow >= MAX_ATTEMPTS) return;
 
   if (key === "↵" || key === "Enter") {
     if (currentGuess.length === 5) {
-      submitGuess();
+      if(!await isRealWord(currentGuess)){
+        alert("The word is invalid, please try again.");
+      }
+      else{
+        submitGuess();
+      }
     }
     return;
   }
@@ -190,6 +220,8 @@ function submitGuess() {
 
   currentRow++;
   currentGuess = "";
+
+  checkAttemptsForInfo();
 }
 
 // 8️⃣ Update key color (preserve best state)
