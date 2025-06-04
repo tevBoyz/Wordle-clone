@@ -68,13 +68,13 @@ const layout = [
 // 4️⃣ Render virtual keyboard
 layout.forEach(row => {
   const rowDiv = document.createElement("div");
-  rowDiv.className = "d-flex flex-wrap justify-content-center mb-2";
+  rowDiv.className = "d-flex justify-content-center mb-2";
 
   row.forEach(key => {
     const button = document.createElement("button");
     button.textContent = key;
     button.className = "btn-rounded btn-secondary m-1";
-    button.style.minWidth = key.length > 1 ? "50px" : "30px";
+    button.style.minWidth = key.length > 1 ? "30px" : "20px";
     button.onclick = () => handleKey(key);
     button.id = `key-${key}`;
     rowDiv.appendChild(button);
